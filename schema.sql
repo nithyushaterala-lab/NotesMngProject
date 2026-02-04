@@ -1,6 +1,7 @@
-PRAGMA foreign_keys = ON;
-
-CREATE TABLE users (
+-- --------------------
+-- Users table
+-- --------------------
+CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     firstname TEXT NOT NULL,
     lastname TEXT NOT NULL,
@@ -10,13 +11,14 @@ CREATE TABLE users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE notes (
+-- --------------------
+-- Notes table
+-- --------------------
+CREATE TABLE IF NOT EXISTS notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

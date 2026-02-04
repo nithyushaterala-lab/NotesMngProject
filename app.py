@@ -6,12 +6,15 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = "myverysecretkey"
 
+DB_FILE = "notes.db"
+
 # --------------------
-# Database Connection (SQLite)
+# Database Connection
 # --------------------
 def get_db_connection():
-    conn = sqlite3.connect("notes.db")
+    conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON;")  # enable foreign keys
     return conn
 
 # --------------------
@@ -104,6 +107,7 @@ def logout():
 @app.route('/addnote', methods=['GET', 'POST'])
 def addnote():
     if 'user_id' not in session:
+        flash("Please log in first.", "danger")
         return redirect('/login')
 
     if request.method == 'POST':
@@ -116,6 +120,14 @@ def addnote():
 
         conn = get_db_connection()
         cur = conn.cursor()
+
+        # Ensure the user exists to satisfy foreign key
+        cur.execute("SELECT id FROM users WHERE id = ?", (session['user_id'],))
+        if not cur.fetchone():
+            conn.close()
+            flash("Invalid session. Please log in again.", "danger")
+            return redirect('/login')
+
         cur.execute(
             "INSERT INTO notes (title, content, user_id) VALUES (?, ?, ?)",
             (title, content, session['user_id'])
@@ -123,7 +135,7 @@ def addnote():
         conn.commit()
         conn.close()
 
-        flash("Note added.", "success")
+        flash("Note added successfully.", "success")
         return redirect('/viewall')
 
     return render_template('addnote.html')
@@ -206,7 +218,7 @@ def updatenote(note_id):
         conn.commit()
         conn.close()
 
-        flash("Note updated.", "success")
+        flash("Note updated successfully.", "success")
         return redirect('/viewall')
 
     conn.close()
@@ -229,7 +241,7 @@ def deletenote(note_id):
     conn.commit()
     conn.close()
 
-    flash("Note deleted.", "info")
+    flash("Note deleted successfully.", "info")
     return redirect('/viewall')
 
 # --------------------
