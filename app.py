@@ -7,12 +7,11 @@ app = Flask(__name__)
 app.secret_key = "myverysecretkey"
 
 # --------------------
-# Database Connection
+# Database Connection (SQLite)
 # --------------------
 def get_db_connection():
     conn = sqlite3.connect("notes.db")
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 # --------------------
@@ -20,9 +19,7 @@ def get_db_connection():
 # --------------------
 @app.route('/')
 def home():
-    if 'user_id' in session:
-        return redirect('/viewall')
-    return redirect('/login')
+    return redirect('/viewall') if 'user_id' in session else redirect('/login')
 
 # --------------------
 # Register
@@ -30,11 +27,13 @@ def home():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        firstname = request.form['firstname'].strip()
+        lastname = request.form['lastname'].strip()
         username = request.form['username'].strip()
         email = request.form['email'].strip()
         password = request.form['password']
 
-        if not username or not email or not password:
+        if not firstname or not lastname or not username or not email or not password:
             flash("Please fill all fields.", "danger")
             return redirect('/register')
 
@@ -42,7 +41,6 @@ def register():
 
         conn = get_db_connection()
         cur = conn.cursor()
-
         cur.execute("SELECT id FROM users WHERE username = ?", (username,))
         if cur.fetchone():
             flash("Username already taken.", "danger")
@@ -50,8 +48,8 @@ def register():
             return redirect('/register')
 
         cur.execute(
-            "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-            (username, email, hashed_pw)
+            "INSERT INTO users (firstname, lastname, username, email, password) VALUES (?, ?, ?, ?, ?)",
+            (firstname, lastname, username, email, hashed_pw)
         )
         conn.commit()
         conn.close()
@@ -97,8 +95,8 @@ def login():
 @app.route('/logout')
 def logout():
     session.clear()
-    flash("Logged out successfully.", "info")
-    return redirect('/login')
+    flash("Logged out successfully.", "success")
+    return redirect(url_for('login'))
 
 # --------------------
 # Add Note
@@ -113,7 +111,7 @@ def addnote():
         content = request.form['content'].strip()
 
         if not title or not content:
-            flash("Title and content cannot be empty.", "danger")
+            flash("Title and content required.", "danger")
             return redirect('/addnote')
 
         conn = get_db_connection()
@@ -125,7 +123,7 @@ def addnote():
         conn.commit()
         conn.close()
 
-        flash("Note added successfully.", "success")
+        flash("Note added.", "success")
         return redirect('/viewall')
 
     return render_template('addnote.html')
@@ -190,7 +188,7 @@ def updatenote(note_id):
 
     if not note:
         conn.close()
-        flash("Note not found or unauthorized.", "danger")
+        flash("Note not found.", "danger")
         return redirect('/viewall')
 
     if request.method == 'POST':
@@ -235,21 +233,17 @@ def deletenote(note_id):
     return redirect('/viewall')
 
 # --------------------
-# About Page
+# About & Contact
 # --------------------
 @app.route('/about')
 def about():
     return render_template('about.html')
 
-# --------------------
-# Contact Page
-# --------------------
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
     if request.method == 'POST':
         flash("Message sent successfully!", "success")
         return redirect(url_for('contact'))
-
     return render_template('contact.html')
 
 # --------------------
@@ -264,4 +258,3 @@ def inject_year():
 # --------------------
 if __name__ == '__main__':
     app.run(debug=True)
-
