@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}All Notes{% endblock %}
+{% block content %}
+<h2>Your Notes</h2>
+<a href="{{ url_for('addnote') }}" class="btn btn-success mb-3">Add Note</a>
+
+{% if notes %}
+  <div class="list-group">
+    {% for note in notes %}
+      <a href="{{ url_for('viewnotes', note_id=note.id) }}" class="list-group-item list-group-item-action">
+        <h5 class="mb-1">{{ note.title }}</h5>
+        <p class="mb-1">{{ note.content[:50] }}{% if note.content|length > 50 %}...{% endif %}</p>
+        <small>Created at: {{ note.created_at }}</small>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>No notes found. <a href="{{ url_for('addnote') }}">Add a new note</a></p>
+{% endif %}
+{% endblock %}

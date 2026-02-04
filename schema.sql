@@ -1,0 +1,22 @@
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    firstname TEXT NOT NULL,
+    lastname TEXT NOT NULL,
+    username TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
